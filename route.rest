@@ -1,0 +1,80 @@
+POST https://pedro.sch.bme.hu/channel
+Content-Type: application/json
+
+{
+    "channel_name": "cluedo-server-pedro",
+    "auth_key": 4452,
+    "max_user": 5
+}
+
+###
+
+GET https://pedro.sch.bme.hu/channel
+
+###
+
+GET https://pedro.sch.bme.hu/channel/5f737224357879281413aa87
+
+###
+
+DELETE https://pedro.sch.bme.hu/channel/5f73b947fd2d925facb00876
+
+###
+
+DELETE https://pedro.sch.bme.hu/channel/
+
+###
+
+POST https://pedro.sch.bme.hu/player
+Content-Type: application/json
+
+{
+    "player_name": "Pedro",
+    "player_id": 1,
+    "password": "alkoholxdddd"
+}
+
+###
+
+POST https://pedro.sch.bme.hu/login-player?player_name=Pedro&password=alkoholxdddd
+
+###
+
+POST https://pedro.sch.bme.hu/login-player
+Content-Type: application/json
+
+{
+    "player_name": "Pedro",
+    "password": "alkoholxdddd"
+}
+
+###
+
+GET https://pedro.sch.bme.hu/player
+
+###
+
+DELETE https://pedro.sch.bme.hu/player/5f73bc2c4f0422532c031240
+
+###
+
+DELETE https://pedro.sch.bme.hu/player/
+
+###
+
+PUT https://pedro.sch.bme.hu/join-channel/5f73bc0a4f0422532c03123e
+Content-Type: application/json
+
+{
+    "player_name": "Pedro",
+    "auth_key": 4452
+}
+
+###
+
+PUT https://pedro.sch.bme.hu/leave-channel/5f737224357879281413aa87
+Content-Type: application/json
+
+{
+    "player_name": "Pedro"
+}
