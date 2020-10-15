@@ -1,2 +1,2 @@
-# cluedo-api
-A REST API for Harry Potter Cluedo Android application.
+# cluedo-server
+A Node JS server for Harry Potter Cluedo Android application.
