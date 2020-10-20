@@ -8,7 +8,7 @@ const channelSchema = new Schema({
         required: true
     },
     auth_key: {
-        type: Number,
+        type: String,
         required: true
     },
     max_user: {

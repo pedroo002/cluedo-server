@@ -7,13 +7,19 @@ const playerSchema = new Schema({
         type: String,
         required: true
     },
-    player_id: {
-        type: Number,
-        default: 0
-    },
     password_hash: {
         type: String,
         required: true
+    },
+    player_id: {
+        type: Number,
+        required: false,
+        default: 0
+    },
+    logged_in: {
+        type: Boolean,
+        required: false,
+        default: false
     }
 });
 

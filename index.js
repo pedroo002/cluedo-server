@@ -5,12 +5,15 @@ const fs = require('fs');
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
+var serveStatic = require('serve-static');
+var path = require('path');
 
 var Pusher = require('pusher');
 var Bcryptjs = require('bcryptjs');
 
 var Player = require('./model/player.js');
 var Channel = require('./model/channel.js');
+const { ppid } = require('process');
 
 var app = express();
 
@@ -26,10 +29,15 @@ var pusher = new Pusher({
 
 mongoose.connect('mongodb://localhost:27017/cluedo_communication', {useNewUrlParser: true, useUnifiedTopology: true });
 
-const options = {
-    key: fs.readFileSync('key.pem'),
-    cert: fs.readFileSync('cert.pem')
+const credentials = {
+    key: fs.readFileSync('letsencrypt/pedro.sch.bme.hu/private.key'),
+    cert: fs.readFileSync('letsencrypt/pedro.sch.bme.hu/certificate.crt'),
+    ca: fs.readFileSync('letsencrypt/pedro.sch.bme.hu/ca_bundle.crt')
 };
+
+const util = require('util');
+const { debug } = require('console');
+const debuglog = util.debuglog('app');
 
 var currentPlayer;
 
@@ -98,7 +106,7 @@ app.put('/join-channel/:id', getChannel, async (req, res) => {
             res.channel.subscribed_users.splice(0, 0, req.body.player_name);
             try {
                 const updatedChannel = await res.channel.save();
-                res.json(updatedChannel);
+                res.status(203).json(updatedChannel);
             } catch (error) {
                 res.status(400).json({ message: error.message });
             }
@@ -114,7 +122,7 @@ app.put('/join-channel/:id', getChannel, async (req, res) => {
 
 app.put('/leave-channel/:id', getChannel, async (req, res) => {
     const player = await Player.findOne({
-        player_name: req.body.player_name
+        player_name: req.query.player_name
     },
     (err, p) => {
         if (err) {
@@ -175,7 +183,7 @@ app.post('/player', async (req, res) => {
     Player.findOne({
         player_name: req.body.player_name
     },
-    (err, player) => {
+    async (err, player) => {
         if (err) {
             res.status(500).json({ message: err.message });
         }
@@ -187,10 +195,12 @@ app.post('/player', async (req, res) => {
         var salt = Bcryptjs.genSaltSync(10);
         var hash = Bcryptjs.hashSync(req.body.password, salt);
 
+        var allPlayers = await Player.find().countDocuments();
+
         let newPlayer = new Player({
             player_name: req.body.player_name,
-            player_id: req.body.player_id,
-            password_hash: hash
+            password_hash: hash,
+            player_id: allPlayers
         })
 
         newPlayer.save(function(error) {
@@ -204,9 +214,9 @@ app.post('/player', async (req, res) => {
     })
 })
 
-app.post('/login-player', async (req, res) => {
+app.put('/login-player', async (req, res) => {
     const player = await Player.findOne({
-        player_name: req.query.player_name
+        player_name: req.body.player_name
     },
     (err) => {
         if (err) {
@@ -215,14 +225,57 @@ app.post('/login-player', async (req, res) => {
     })
 
     if (player) {
-        if (!Bcryptjs.compareSync(req.query.password, player.password_hash)) {
-            return res.status(401).json({ message: "Password is incorrect." });
+        if (!Bcryptjs.compareSync(req.body.password, player.password_hash)) {
+            return res.status(401).send("Password is incorrect.");
         } else {
-            //res.status(200).send(player.player_name + " logged in succesfully.");
-            res.status(200).send(player);
+            if (!player.logged_in) {
+                player.logged_in = true;
+                try {
+                    await player.save();
+                    currentPlayer = player;
+                    res.status(200).send(player);
+                } catch (error) {
+                    res.status(500).json({ message: error.message });
+                }
+            }
+            else {
+                res.status(400).send("Player \'" + player.player_name + "\' is already logged in.");
+            }
         }
     } else {
-        res.status(404).json({ message: "Player \'" + req.body.player_name + "\' does not exist." });
+        res.status(404).send("Player \'" + req.body.player_name + "\' does not exist.");
+    }
+})
+
+app.put('/logout-player', async (req, res) => {
+    const player = await Player.findOne({
+        player_name: req.body.player_name
+    },
+    (err) => {
+        if (err) {
+            res.status(500).json({ message: err.message });
+        }
+    })
+
+    if (player) {
+        if (!Bcryptjs.compareSync(req.body.password, player.password_hash)) {
+            return res.status(401).json({ message: "Password is incorrect." });
+        } else {
+            if (player.logged_in) {
+                player.logged_in = false;
+                try {
+                    await player.save();
+                    res.status(200).send("Player \'" + player.player_name + "\' logged out succesfully.");
+                } catch (error) {
+                    res.status(500).json({ message: error.message });
+                }
+            }
+            else {
+                res.status(400).send("Player \'" + player.player_name + "\' is not logged in.");
+            }
+        }
+    } else {
+        res.status(404).send("Player \'" + req.body.player_name + "\' does not exist.");
     }
 })
 
@@ -245,7 +298,7 @@ app.delete('/player/:id', getPlayer, async (req, res) => {
 
     try {
         await Player.deleteOne(player);
-        res.json({ message: "Player has been deleted successfully." });
+        res.json({ message: "Player \'" + player.player_name + "\' has been deleted successfully." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -304,25 +357,31 @@ async function getPlayer(req, res, next) {
 
 app.post('/incriminate', (req, res) => {
     let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.body.channel_name, 'incrimination', payload);
+    pusher.trigger(req.query.channel_name, 'incrimination', payload);
     res.send(200);
 })
 
 app.post('/accuse', (req, res) => {
 	let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.body.channel_name, 'accusation', payload);
+    pusher.trigger(req.query.channel_name, 'accusation', payload);
     res.send(200);
 })
 
 app.post('/move', (req, res) => {
 	let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.body.channel_name, 'player-moves', payload);
+    pusher.trigger(req.query.channel_name, 'player-moves', payload);
     res.send(200);
 })
 
 app.post('/draw-card', (req, res) => {
 	let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.body.channel_name, 'card-drawing', payload);
+    pusher.trigger(req.query.channel_name, 'card-drawing', payload);
+    res.send(200);
+})
+
+app.post('/ready', (req, res) => {
+    let payload = {message: req.body.message, sender_id: req.body.sender_id}
+    pusher.trigger(req.query.channel_name, 'game-ready', payload);
     res.send(200);
 })
 
@@ -331,8 +390,8 @@ app.post('/pusher/auth/presence', (req, res) => {
     let channel = req.body.channel_name;
 
     let presenceData = {
-        player_name: currentPlayer.player_name,
-        player_info: { id: currentPlayer.player_id, channel: currentPlayer.channel_name }
+        user_id: socketId,
+        user_info: { channel_name: channel }
     };
 
     let auth = pusher.authenticate(socketId, channel, presenceData);
@@ -344,11 +403,10 @@ app.post('/pusher/auth/private', (req, res) => {
     res.status(200).send(pusher.authenticate(req.body.socket_id, req.body.channel_name));
 });
 
-app.get('/test', (req, res) => {
-    res.status(200).send("Server works.");
-});
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/.well-known/pki-validation', express.static(path.join(__dirname, '/.well-known/pki-validation'), { 'dotfiles': 'allow' }));
 
-var httpsServer = https.createServer(options, app);
+var httpsServer = https.createServer(credentials, app);
 var httpServer = http.createServer(app);
 
 httpsServer.listen(443);
