@@ -18,6 +18,10 @@ const channelSchema = new Schema({
     subscribed_users: {
         type: Array,
         default: []
+    },
+    is_waiting: {
+        type: Boolean,
+        default: true
     }
 });
 

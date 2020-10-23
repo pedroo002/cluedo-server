@@ -39,19 +39,34 @@ const util = require('util');
 const { debug } = require('console');
 const debuglog = util.debuglog('app');
 
-var currentPlayer;
-
 app.get('/channel', async (req, res) => {
     try {
         const channels = await Channel.find()
         res.json(channels)
     } catch(err) {
-        res.status(500).json({ message: err.message })
+        res.status(500).json({ message: err.message });
     }
 })
 
 app.get('/channel/:id', getChannel, async (req, res) => {
     res.json(res.channel);
+})
+
+app.get('/channel-by-limit', async (req, res) => {
+    var channels = await Channel.find({ max_user: req.query.max_user });
+    res.send(channels);
+})
+
+app.put('/stop-waiting/:id', getChannel, async (req, res) => {
+    var channel = res.channel;
+    channel.is_waiting = false;
+    try {
+        var updatedChannel = await channel.save();
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    } finally {
+        res.status(203).json(updatedChannel);
+    }
 })
 
 app.post('/channel', async (req, res) => {
@@ -116,7 +131,7 @@ app.put('/join-channel/:id', getChannel, async (req, res) => {
         }
     }
     else {
-        return res.status(401).json({ message: "Channel is full." })
+        return res.status(401).json({ message: "Channel is full." });
     }
 })
 
@@ -143,7 +158,7 @@ app.put('/leave-channel/:id', getChannel, async (req, res) => {
         const updatedChannel = await res.channel.save();
         res.json(updatedChannel);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 })
 
@@ -171,7 +186,7 @@ app.get('/player', async (req, res) => {
         const players = await Player.find()
         res.json(players)
     } catch(err) {
-        res.status(500).json({ message: err.message })
+        res.status(500).json({ message: err.message });
     }
 })
 
@@ -226,24 +241,24 @@ app.put('/login-player', async (req, res) => {
 
     if (player) {
         if (!Bcryptjs.compareSync(req.body.password, player.password_hash)) {
-            return res.status(401).send("Password is incorrect.");
+            return res.status(401).json({ message: "Password is incorrect." });
         } else {
             if (!player.logged_in) {
                 player.logged_in = true;
                 try {
                     await player.save();
                     currentPlayer = player;
-                    res.status(200).send(player);
+                    res.status(200).json(player);
                 } catch (error) {
                     res.status(500).json({ message: error.message });
                 }
             }
             else {
-                res.status(400).send("Player \'" + player.player_name + "\' is already logged in.");
+                res.status(400).json({ message: "Player \'" + player.player_name + "\' is already logged in." });
             }
         }
     } else {
-        res.status(404).send("Player \'" + req.body.player_name + "\' does not exist.");
+        res.status(404).json({ message: "Player \'" + req.body.player_name + "\' does not exist." });
     }
 })
 
@@ -265,17 +280,40 @@ app.put('/logout-player', async (req, res) => {
                 player.logged_in = false;
                 try {
                     await player.save();
-                    res.status(200).send("Player \'" + player.player_name + "\' logged out succesfully.");
+                    res.status(200).json({ message: "Player \'" + player.player_name + "\' logged out succesfully." });
                 } catch (error) {
                     res.status(500).json({ message: error.message });
                 }
             }
             else {
-                res.status(400).send("Player \'" + player.player_name + "\' is not logged in.");
+                res.status(400).json({ message: "Player \'" + player.player_name + "\' is not logged in." });
             }
         }
     } else {
-        res.status(404).send("Player \'" + req.body.player_name + "\' does not exist.");
+        res.status(404).json({ message: "Player \'" + req.body.player_name + "\' does not exist." });
+    }
+})
+
+app.put('/reset', async (req, res) => {
+    const players = await Player.find();
+    for (let i = 0; i < players.length; i++) {
+        if (players[i].logged_in) {
+            players[i].logged_in = false;
+            try {
+                await players[i].save();
+            } catch (error) {
+                res.status(500).json({ message: error.message });
+            }
+        }
+    }
+
+    var allChannels = Channel.find();
+    try {
+        await Channel.deleteMany(allChannels);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    } finally {
+        res.send("Server reset.");
     }
 })
 
@@ -333,7 +371,7 @@ async function getChannel(req, res, next) {
             return res.status(404).json({ message: 'Cannot find channel.' });
         }
     } catch (error) {
-        return res.status(500).json({ message: error.message })
+        return res.status(500).json({ message: error.message });
     }
 
     res.channel = channel;
@@ -348,7 +386,7 @@ async function getPlayer(req, res, next) {
             return res.status(404).json({ message: 'Cannot find player.' });
         }
     } catch (error) {
-        return res.status(500).json({ message: error.message })
+        return res.status(500).json({ message: error.message });
     }
 
     res.player = player;
@@ -358,31 +396,71 @@ async function getPlayer(req, res, next) {
 app.post('/incriminate', (req, res) => {
     let payload = {message: req.body.message, sender_id: req.body.sender_id}
     pusher.trigger(req.query.channel_name, 'incrimination', payload);
-    res.send(200);
+    res.sendStatus(200);
 })
 
 app.post('/accuse', (req, res) => {
 	let payload = {message: req.body.message, sender_id: req.body.sender_id}
     pusher.trigger(req.query.channel_name, 'accusation', payload);
-    res.send(200);
+    res.sendStatus(200);
 })
 
 app.post('/move', (req, res) => {
 	let payload = {message: req.body.message, sender_id: req.body.sender_id}
     pusher.trigger(req.query.channel_name, 'player-moves', payload);
-    res.send(200);
+    res.sendStatus(200);
 })
 
 app.post('/draw-card', (req, res) => {
 	let payload = {message: req.body.message, sender_id: req.body.sender_id}
     pusher.trigger(req.query.channel_name, 'card-drawing', payload);
-    res.send(200);
+    res.sendStatus(200);
 })
 
 app.post('/ready', (req, res) => {
     let payload = {message: req.body.message, sender_id: req.body.sender_id}
     pusher.trigger(req.query.channel_name, 'game-ready', payload);
-    res.send(200);
+    res.sendStatus(200);
+})
+
+app.post('/submit', (req, res) => {
+    let payload = {message: req.body.message, sender_id: req.body.sender_id}
+    pusher.trigger(req.query.player_name, 'character-submit', payload);
+    res.sendStatus(200);
+})
+
+app.post('/character-selected', (req, res) => {
+    let payload =
+    {
+        message:
+        {
+            message: req.body.message,
+            player_name: req.query.player_name,
+            character_name: req.query.character_name,
+            token_src: req.query.token_src
+        },
+        sender_id: req.body.sender_id
+    }
+    pusher.trigger(req.query.channel_name, 'character-selected', payload);
+    res.sendStatus(200);
+})
+
+app.post('/remove-channel', (req, res) => {
+    let payload = {message: req.body.message, sender_id: req.body.sender_id}
+    pusher.trigger(req.query.channel_name, 'channel-removed', payload);
+    res.sendStatus(200);
+})
+
+app.post('/leave-channel', (req, res) => {
+    let payload = {message: req.body.message, sender_id: req.body.sender_id}
+    pusher.trigger(req.query.player_name, 'player-leaves', payload);
+    res.sendStatus(200);
+})
+
+app.post('/enter-channel', (req, res) => {
+    let payload = {message: req.body.message, sender_id: req.body.sender_id}
+    pusher.trigger(req.query.player_name, 'player-arrives', payload);
+    res.sendStatus(200);
 })
 
 app.post('/pusher/auth/presence', (req, res) => {

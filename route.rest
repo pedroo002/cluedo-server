@@ -4,8 +4,12 @@ Content-Type: application/json
 {
     "channel_name": "cluedo-server-pedro",
     "auth_key": "4452",
-    "max_user": 5
+    "max_user": 3
 }
+
+###
+
+PUT https://pedro.sch.bme.hu/stop-waiting/5f91ef4a66190b5510714ce3
 
 ###
 
@@ -13,11 +17,15 @@ GET https://pedro.sch.bme.hu/channel
 
 ###
 
-GET https://pedro.sch.bme.hu/channel/5f737224357879281413aa87
+GET https://pedro.sch.bme.hu/channel-by-limit?max_user=4
 
 ###
 
-DELETE https://pedro.sch.bme.hu/channel/5f73b947fd2d925facb00876
+GET https://pedro.sch.bme.hu/channel/5f90a37786feeb4f480f1d6f
+
+###
+
+DELETE https://pedro.sch.bme.hu/channel/5f909d18cbaf662b0cf90fa8
 
 ###
 
@@ -39,8 +47,8 @@ PUT https://pedro.sch.bme.hu/login-player
 Content-Type: application/json
 
 {
-    "player_name": "Cicus",
-    "password": "mizujs"
+    "player_name": "Lajos",
+    "password": "jelszo"
 }
 
 ###
@@ -49,9 +57,13 @@ PUT https://pedro.sch.bme.hu/logout-player
 Content-Type: application/json
 
 {
-    "player_name": "Lajos",
-    "password": "jelszo"
+    "player_name": "Cicus",
+    "password": "mizujs"
 }
+
+###
+
+PUT https://pedro.sch.bme.hu/reset
 
 ###
 
@@ -59,7 +71,7 @@ GET https://pedro.sch.bme.hu/player
 
 ###
 
-DELETE https://pedro.sch.bme.hu/player/5f8efaa2bad91807a405d08b
+DELETE https://pedro.sch.bme.hu/player/5f909dcacbaf662b0cf90fa9
 
 ###
 
@@ -77,4 +89,4 @@ Content-Type: application/json
 
 ###
 
-PUT https://pedro.sch.bme.hu/leave-channel/5f8f2332780f9834c0cb6989?player_name=Pedro
+PUT https://pedro.sch.bme.hu/leave-channel/5f91b2d8c9fcfb23d40c4f90?player_name=Cicus
