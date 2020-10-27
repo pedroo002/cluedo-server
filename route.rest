@@ -57,8 +57,28 @@ PUT https://pedro.sch.bme.hu/logout-player
 Content-Type: application/json
 
 {
+    "player_name": "Pedro",
+    "password": "alkoholxdddd"
+}
+
+###
+
+PUT https://pedro.sch.bme.hu/logout-player
+Content-Type: application/json
+
+{
     "player_name": "Cicus",
     "password": "mizujs"
+}
+
+###
+
+PUT https://pedro.sch.bme.hu/logout-player
+Content-Type: application/json
+
+{
+    "player_name": "Lajos",
+    "password": "jelszo"
 }
 
 ###
@@ -71,7 +91,7 @@ GET https://pedro.sch.bme.hu/player
 
 ###
 
-DELETE https://pedro.sch.bme.hu/player/5f909dcacbaf662b0cf90fa9
+DELETE https://pedro.sch.bme.hu/player/5f92d56e57212f07406e5f78
 
 ###
 

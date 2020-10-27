@@ -127,7 +127,7 @@ app.put('/join-channel/:id', getChannel, async (req, res) => {
             }
         }
         else {
-            return res.status(400).json({ message: "Wrong authentication key." });
+            return res.status(403).json({ message: "Wrong authentication key." });
         }
     }
     else {
@@ -417,15 +417,23 @@ app.post('/draw-card', (req, res) => {
     res.sendStatus(200);
 })
 
-app.post('/ready', (req, res) => {
+app.post('/game-ready', (req, res) => {
     let payload = {message: req.body.message, sender_id: req.body.sender_id}
     pusher.trigger(req.query.channel_name, 'game-ready', payload);
     res.sendStatus(200);
 })
 
-app.post('/submit', (req, res) => {
-    let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.query.player_name, 'character-submit', payload);
+app.post('/character-submit', (req, res) => {
+    let payload = 
+    {
+        message:
+        {
+            message: req.body.message,
+            player_name: req.query.player_name,
+        },
+        sender_id: req.body.sender_id
+    }
+    pusher.trigger(req.query.channel_name, 'character-submit', payload);
     res.sendStatus(200);
 })
 
@@ -445,21 +453,67 @@ app.post('/character-selected', (req, res) => {
     res.sendStatus(200);
 })
 
-app.post('/remove-channel', (req, res) => {
+app.post('/channel-removed-before-join', (req, res) => {
     let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.query.channel_name, 'channel-removed', payload);
+    pusher.trigger(req.query.channel_name, 'channel-removed-before-join', payload);
     res.sendStatus(200);
 })
 
-app.post('/leave-channel', (req, res) => {
+app.post('/channel-removed-after-join', (req, res) => {
     let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.query.player_name, 'player-leaves', payload);
+    pusher.trigger(req.query.channel_name, 'channel-removed-after-join', payload);
     res.sendStatus(200);
 })
 
-app.post('/enter-channel', (req, res) => {
-    let payload = {message: req.body.message, sender_id: req.body.sender_id}
-    pusher.trigger(req.query.player_name, 'player-arrives', payload);
+app.post('/player-leaves', (req, res) => {
+    let payload =
+    {
+        message: 
+        {
+            message: req.body.message,
+            player_name: req.query.player_name
+        },
+        sender_id: req.body.sender_id
+    }
+    pusher.trigger(req.query.channel_name, 'player-leaves', payload);
+    res.sendStatus(200);
+})
+
+app.post('/player-arrives', (req, res) => {
+    let payload =
+    {
+        message:
+        {
+            message: req.body.message,
+            player_name: req.query.player_name
+        },
+        sender_id: req.body.sender_id
+    }
+    pusher.trigger(req.query.channel_name, 'player-arrives', payload);
+    res.sendStatus(200);
+})
+
+app.post('/mystery-pairs', (req, res) => {
+    let payload = 
+    {
+        message:
+        {
+            message: req.body.message,
+            pair_list: req.body.mystery_pairs
+        },
+        sender_id: req.body.sender_id
+    }
+    pusher.trigger(req.query.channel_name, 'mystery-card-pairs', payload);
+    res.sendStatus(200);
+})
+
+app.post('/ready-to-game', (req, res) => {
+    let payload =
+    {
+        message: req.body.message,
+        sender_id: req.body.sender_id
+    }
+    pusher.trigger(req.query.channel_name, 'ready-to-game', payload);
     res.sendStatus(200);
 })
 
