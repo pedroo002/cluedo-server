@@ -90,7 +90,7 @@ app.post('/channel', async (req, res) => {
 
         newChannel.save(function(error) {
             if (error) {
-                throw error;
+                res.status(500).json(error);
             }
         });
 
@@ -141,7 +141,7 @@ app.put('/leave-channel/:id', getChannel, async (req, res) => {
     },
     (err, p) => {
         if (err) {
-            throw err;
+            res.status(500).json(err);
         }
 
         if (p == null) {
@@ -220,7 +220,7 @@ app.post('/player', async (req, res) => {
 
         newPlayer.save(function(error) {
             if (error) {
-                throw error;
+                res.status(500).json(error);
             }
         })
 
