@@ -477,8 +477,7 @@ app.post('/character-selected', (req, res) => {
         {
             message: req.body.message,
             player_name: req.query.player_name,
-            character_name: req.query.character_name,
-            token_src: req.query.token_src
+            character_name: req.query.character_name
         },
         sender_id: req.body.sender_id
     }
