@@ -532,18 +532,7 @@ app.post('/new-player-added', (req, res) => {
 })
 
 app.post('/refresh-multi-selector', (req, res) => {
-    for (let i = 0; i < req.body.selection_count; i++) {
-        let payload =
-        {
-            message:
-            {
-                player_name: req.body.selections[i].player_name,
-                character_name: req.body.selections[i].character_name,
-                token_src: req.body.selections[i].token_src
-            }
-        }
-        pusher.trigger(req.query.channel_name, 'character-selected', payload);
-    }
+    pusher.trigger(req.query.channel_name, 'catch-up', req.body);
     res.sendStatus(200);
 })
 
