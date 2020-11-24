@@ -3,9 +3,7 @@ const http = require('http');
 const fs = require('fs');
 
 var express = require('express');
-var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var serveStatic = require('serve-static');
 var path = require('path');
 
 var Pusher = require('pusher');
@@ -13,7 +11,6 @@ var Bcryptjs = require('bcryptjs');
 
 var Player = require('./model/player.js');
 var Channel = require('./model/channel.js');
-const { ppid } = require('process');
 
 var app = express();
 
@@ -34,10 +31,6 @@ const credentials = {
     cert: fs.readFileSync('letsencrypt/pedro.sch.bme.hu/certificate.crt'),
     ca: fs.readFileSync('letsencrypt/pedro.sch.bme.hu/ca_bundle.crt')
 };
-
-const util = require('util');
-const { debug } = require('console');
-const debuglog = util.debuglog('app');
 
 app.get('/channel', async (req, res) => {
     try {
@@ -705,6 +698,8 @@ app.post('/pusher/auth/private', (req, res) => {
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/.well-known/pki-validation', express.static(path.join(__dirname, '/.well-known/pki-validation'), { 'dotfiles': 'allow' }));
+
+module.exports = app;
 
 var httpsServer = https.createServer(credentials, app);
 var httpServer = http.createServer(app);
