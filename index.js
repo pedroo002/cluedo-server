@@ -32,45 +32,18 @@ const credentials = {
 };
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/resources', express.static(path.join(__dirname, 'resources')));
 app.use('/.well-known/pki-validation', express.static(path.join(__dirname, '/.well-known/pki-validation'), { 'dotfiles': 'allow' }));
-
-async function getChannel(req, res, next) {
-    let channel
-    try {
-        channel = await Channel.findById(req.params.id);
-        if (channel == null) {
-            return res.status(404).json({ message: 'Cannot find channel.' });
-        }
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-
-    res.channel = channel;
-    next();
-}
-
-async function getPlayer(req, res, next) {
-    let player
-    try {
-        player = await Player.findById(req.params.id);
-        if (player == null) {
-            return res.status(404).json({ message: 'Cannot find player.' });
-        }
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-
-    res.player = player;
-    next();
-}
 
 let channelEndpoints = require('./endpoint/channel.js');
 let playerEndpoints = require('./endpoint/player.js');
 let pusherEndpoints = require('./endpoint/pusher.js');
+let assetEndpoint = require('./endpoint/assets.js');
 
-channelEndpoints(app, Channel, getChannel);
-playerEndpoints(app, Player, getPlayer);
+channelEndpoints(app, Channel);
+playerEndpoints(app, Player, Channel);
 pusherEndpoints(app, pusher);
+assetEndpoint(app, __dirname);
 
 var httpsServer = https.createServer(credentials, app);
 var httpServer = http.createServer(app);

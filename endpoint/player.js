@@ -1,6 +1,6 @@
 var Bcryptjs = require('bcryptjs');
 
-module.exports = function(app, Player, getPlayer) {
+module.exports = function(app, Player, Channel) {
     app.get('/player', async (req, res) => {
         try {
             const players = await Player.find();
@@ -179,4 +179,19 @@ module.exports = function(app, Player, getPlayer) {
             }
         }
     });
+}
+
+async function getPlayer(req, res, next) {
+    let player
+    try {
+        player = await Player.findById(req.params.id);
+        if (player == null) {
+            return res.status(404).json({ message: 'Cannot find player.' });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+
+    res.player = player;
+    next();
 }

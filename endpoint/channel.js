@@ -1,4 +1,4 @@
-module.exports = function(app, Channel, getChannel) {
+module.exports = function(app, Channel) {
     app.get('/channel', async (req, res) => {
         try {
             const channels = await Channel.find();
@@ -140,4 +140,19 @@ module.exports = function(app, Channel, getChannel) {
             res.status(500).json({ message: error.message });
         }
     });
+}
+
+async function getChannel(req, res, next) {
+    let channel
+    try {
+        channel = await Channel.findById(req.params.id);
+        if (channel == null) {
+            return res.status(404).json({ message: 'Cannot find channel.' });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+
+    res.channel = channel;
+    next();
 }
