@@ -1,4 +1,5 @@
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
 
 var express = require('express');
@@ -45,5 +46,7 @@ pusherEndpoints(app, pusher);
 assetEndpoint(app, __dirname);
 
 var httpsServer = https.createServer(credentials, app);
+var httpServer = http.createServer(app);
 
 httpsServer.listen(443);
+httpServer.listen(80);
