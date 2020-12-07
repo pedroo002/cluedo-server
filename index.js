@@ -40,9 +40,39 @@ let playerEndpoints = require('./endpoint/player.js');
 let pusherEndpoints = require('./endpoint/pusher.js');
 let assetEndpoint = require('./endpoint/assets.js');
 
-channelEndpoints(app, Channel);
-playerEndpoints(app, Player, Channel);
-pusherEndpoints(app, pusher);
+async function getChannel(req, res, next) {
+    let channel
+    try {
+        channel = await Channel.findById(req.params.id);
+        if (channel == null) {
+            return res.status(404).json({ message: 'Cannot find channel.' });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+
+    res.channel = channel;
+    next();
+}
+
+async function getPlayer(req, res, next) {
+    let player
+    try {
+        player = await Player.findById(req.params.id);
+        if (player == null) {
+            return res.status(404).json({ message: 'Cannot find player.' });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+
+    res.player = player;
+    next();
+}
+
+channelEndpoints(app, Player, Channel, getChannel);
+playerEndpoints(app, Player, Channel, getPlayer);
+pusherEndpoints(app, pusher, Channel);
 assetEndpoint(app, __dirname);
 
 var httpsServer = https.createServer(credentials, app);

@@ -1,4 +1,4 @@
-module.exports = function(app, pusher) {
+module.exports = function(app, pusher, Channel) {
     app.post('/incriminate', (req, res) => {
         let payload =
         {

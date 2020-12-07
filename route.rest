@@ -99,12 +99,12 @@ DELETE https://pedro.sch.bme.hu/player/
 
 ###
 
-PUT https://pedro.sch.bme.hu/join-channel/5f73bc0a4f0422532c03123e
+PUT https://pedro.sch.bme.hu/join-channel/5fcd21699bc53c339cc86b51
 Content-Type: application/json
 
 {
     "player_name": "Pedro",
-    "auth_key": "4452"
+    "auth_key": "0000"
 }
 
 ###

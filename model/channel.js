@@ -22,6 +22,10 @@ const channelSchema = new Schema({
     is_waiting: {
         type: Boolean,
         default: true
+    },
+    loaded_users: {
+        type: Number,
+        default: 0
     }
 });
 
