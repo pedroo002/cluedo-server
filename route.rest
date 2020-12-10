@@ -91,7 +91,7 @@ GET https://pedro.sch.bme.hu/player
 
 ###
 
-DELETE https://pedro.sch.bme.hu/player/5faa618f3fb4da85d8e25807
+DELETE https://pedro.sch.bme.hu/player/5fcf97c6a842a53f14591f48
 
 ###
 
